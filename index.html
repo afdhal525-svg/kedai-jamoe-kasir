@@ -1,187 +1,188 @@
 <!DOCTYPE html>
+
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <!-- FIX #3: Hapus maximum-scale untuk iOS input zoom compatibility -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Kedai Jamoe Kasir</title>
+
+```
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Supabase JS v2 -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    * { 
+        font-family: 'Inter', sans-serif; 
+        -webkit-tap-highlight-color: transparent; 
+        touch-action: manipulation;
+    }
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    body { 
+        background: #f8fafc; 
+        overscroll-behavior-y: none;
+        -webkit-overflow-scrolling: touch;
+    }
     
-    <!-- Supabase JS v2 -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    .page { display: none; animation: fadeIn 0.2s ease; }
+    .page.active { display: block; }
     
-    <style>
-        * { 
-            font-family: 'Inter', sans-serif; 
-            -webkit-tap-highlight-color: transparent; 
-            touch-action: manipulation; /* FIX: Prevent double-tap zoom */
-        }
-        
-        body { 
-            background: #f8fafc; 
-            overscroll-behavior-y: none; /* FIX #9: Prevent iOS elastic scroll */
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        .page { display: none; animation: fadeIn 0.2s ease; }
-        .page.active { display: block; }
-        
-        @keyframes fadeIn { 
-            from { opacity: 0; transform: translateY(8px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
-        
-        .btn-primary { 
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); 
-            transition: transform 0.1s, opacity 0.2s;
-        }
-        .btn-primary:active { transform: scale(0.97); }
-        .btn-primary:disabled { opacity: 0.6; pointer-events: none; }
-        
-        .card { 
-            background: white; 
-            border-radius: 16px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08); 
-        }
-        
-        .nav-item.active { color: #d97706; }
-        .nav-item.active .nav-icon { background: #fef3c7; }
-        
-        .product-card:active { transform: scale(0.98); }
-        
-        input:focus, select:focus, textarea:focus { 
-            outline: none; 
-            border-color: #f59e0b; 
-        }
-        
-        /* FIX #7: Better input styling for iOS */
-        input[type="number"] {
-            -webkit-appearance: none;
-            appearance: none;
-        }
-        
-        .toast { 
-            position: fixed; 
-            bottom: 100px; 
-            left: 50%; 
-            transform: translateX(-50%) translateY(100px); 
-            background: #1e293b; 
-            color: white; 
-            padding: 14px 24px; 
-            border-radius: 14px; 
-            font-size: 14px; 
-            font-weight: 500;
-            z-index: 1000; 
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            opacity: 0;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            max-width: 90vw;
-            text-align: center;
-            pointer-events: none;
-        }
-        .toast.show { 
-            transform: translateX(-50%) translateY(0); 
-            opacity: 1; 
-        }
-        
-        /* FIX #9: iOS Modal handling */
-        .modal-overlay { 
-            position: fixed; 
-            inset: 0; 
-            background: rgba(0,0,0,0.5); 
-            z-index: 50; 
-            display: none; 
-            align-items: flex-end; 
-            justify-content: center;
-            /* FIX: Prevent body scroll tapi allow modal scroll */
-            overscroll-behavior: contain;
-        }
-        .modal-overlay.active { display: flex; }
-        
-        .modal-content { 
-            background: white; 
-            border-radius: 24px 24px 0 0; 
-            width: 100%; 
-            max-height: 85vh; 
-            overflow-y: auto; 
-            animation: slideUp 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            -webkit-overflow-scrolling: touch;
-            overscroll-behavior-y: contain;
-        }
-        
-        @keyframes slideUp { 
-            from { transform: translateY(100%); } 
-            to { transform: translateY(0); } 
-        }
-        
-        .loading { 
-            display: inline-block; 
-            width: 20px; 
-            height: 20px; 
-            border: 2px solid rgba(255,255,255,0.3); 
-            border-top: 2px solid white; 
-            border-radius: 50%; 
-            animation: spin 1s linear infinite; 
-        }
-        
-        @keyframes spin { 
-            0% { transform: rotate(0deg); } 
-            100% { transform: rotate(360deg); } 
-        }
-        
-        .badge { 
-            font-size: 10px; 
-            padding: 3px 10px; 
-            border-radius: 999px; 
-            font-weight: 600; 
-        }
-        .stock-low { background: #fee2e2; color: #dc2626; }
-        .stock-ok { background: #d1fae5; color: #059669; }
-        
-        /* Payment button active state */
-        .payment-btn { transition: all 0.2s; }
-        .payment-btn.active { 
-            border-color: #f59e0b !important; 
-            background: #fffbeb; 
-            color: #d97706 !important; 
-        }
-        
-        /* Safe area for iPhone notch */
-        .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 20px); }
-        .safe-top { padding-top: env(safe-area-inset-top, 0); }
-        
-        /* Quantity stepper */
-        .qty-btn { 
-            width: 36px; 
-            height: 36px; 
-            border-radius: 10px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            transition: all 0.15s;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        .qty-btn:active { transform: scale(0.9); background: #f1f5f9; }
-        
-        /* Touch target minimum 44px */
-        .touch-target { min-height: 44px; min-width: 44px; }
-    </style>
+    @keyframes fadeIn { 
+        from { opacity: 0; transform: translateY(8px); } 
+        to { opacity: 1; transform: translateY(0); } 
+    }
+    
+    .btn-primary { 
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); 
+        transition: transform 0.1s, opacity 0.2s;
+    }
+    .btn-primary:active { transform: scale(0.97); }
+    .btn-primary:disabled { opacity: 0.6; pointer-events: none; }
+    
+    .card { 
+        background: white; 
+        border-radius: 16px; 
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08); 
+    }
+    
+    .nav-item.active { color: #d97706; }
+    .nav-item.active .nav-icon { background: #fef3c7; }
+    
+    .product-card:active { transform: scale(0.98); }
+    
+    input:focus, select:focus, textarea:focus { 
+        outline: none; 
+        border-color: #f59e0b; 
+    }
+    
+    input[type="number"] {
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    
+    .toast { 
+        position: fixed; 
+        bottom: 100px; 
+        left: 50%; 
+        transform: translateX(-50%) translateY(100px); 
+        background: #1e293b; 
+        color: white; 
+        padding: 14px 24px; 
+        border-radius: 14px; 
+        font-size: 14px; 
+        font-weight: 500;
+        z-index: 1000; 
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        opacity: 0;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        max-width: 90vw;
+        text-align: center;
+        pointer-events: none;
+    }
+    .toast.show { 
+        transform: translateX(-50%) translateY(0); 
+        opacity: 1; 
+    }
+    
+    .modal-overlay { 
+        position: fixed; 
+        inset: 0; 
+        background: rgba(0,0,0,0.5); 
+        z-index: 50; 
+        display: none; 
+        align-items: flex-end; 
+        justify-content: center;
+        overscroll-behavior: contain;
+    }
+    .modal-overlay.active { display: flex; }
+    
+    .modal-content { 
+        background: white; 
+        border-radius: 24px 24px 0 0; 
+        width: 100%; 
+        max-height: 85vh; 
+        overflow-y: auto; 
+        animation: slideUp 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+    }
+    
+    @keyframes slideUp { 
+        from { transform: translateY(100%); } 
+        to { transform: translateY(0); } 
+    }
+    
+    .loading { 
+        display: inline-block; 
+        width: 20px; 
+        height: 20px; 
+        border: 2px solid rgba(255,255,255,0.3); 
+        border-top: 2px solid white; 
+        border-radius: 50%; 
+        animation: spin 1s linear infinite; 
+    }
+    
+    @keyframes spin { 
+        0% { transform: rotate(0deg); } 
+        100% { transform: rotate(360deg); } 
+    }
+    
+    .badge { 
+        font-size: 10px; 
+        padding: 3px 10px; 
+        border-radius: 999px; 
+        font-weight: 600; 
+    }
+    .stock-low { background: #fee2e2; color: #dc2626; }
+    .stock-ok { background: #d1fae5; color: #059669; }
+    
+    .payment-btn { transition: all 0.2s; }
+    .payment-btn.active { 
+        border-color: #f59e0b !important; 
+        background: #fffbeb; 
+        color: #d97706 !important; 
+    }
+    
+    .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 20px); }
+    .safe-top { padding-top: env(safe-area-inset-top, 0); }
+    
+    .qty-btn { 
+        width: 36px; 
+        height: 36px; 
+        border-radius: 10px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        transition: all 0.15s;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+    .qty-btn:active { transform: scale(0.9); background: #f1f5f9; }
+    
+    .touch-target { min-height: 44px; min-width: 44px; }
+
+    /* FIX: Navbar hanya terlihat di mainApp */
+    #mainApp .navbar { display: flex; }
+    .navbar { display: none; }
+</style>
+```
+
 </head>
 <body class="text-slate-800 antialiased">
 
 <!-- ==================== LOGIN PAGE ==================== -->
+
 <div id="loginPage" class="page active min-h-screen flex flex-col justify-center px-6 py-8">
     <div class="text-center mb-10">
         <div class="w-24 h-24 mx-auto mb-5 rounded-3xl btn-primary flex items-center justify-center text-white text-4xl shadow-xl shadow-amber-200/50">
@@ -190,41 +191,43 @@
         <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Kedai Jamoe</h1>
         <p class="text-slate-500 text-sm mt-2 font-medium">Aplikasi Kasir Mobile</p>
     </div>
-    
-    <div class="card p-6 space-y-5">
-        <div>
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Email</label>
-            <input type="email" id="loginEmail" placeholder="email@contoh.com" 
-                class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors"
-                autocomplete="email" autocapitalize="none">
-        </div>
-        <div>
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Password</label>
-            <input type="password" id="loginPassword" placeholder="••••••••" 
-                class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors"
-                autocomplete="current-password">
-        </div>
-        
-        <!-- FIX #4: Tambah ID loginBtn -->
-        <button id="loginBtn" onclick="handleLogin()" class="w-full btn-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-amber-200/50 text-base touch-target">
-            <span id="loginText">Masuk</span>
-        </button>
-        
-        <p class="text-center text-sm text-slate-400 mt-4">
-            Belum punya akun? 
-            <span onclick="showPage('registerPage')" class="text-amber-600 font-bold cursor-pointer hover:underline">Daftar</span>
-        </p>
+
+```
+<div class="card p-6 space-y-5">
+    <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Email</label>
+        <input type="email" id="loginEmail" placeholder="email@contoh.com" 
+            class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors"
+            autocomplete="email" autocapitalize="none">
     </div>
+    <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" 
+            class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors"
+            autocomplete="current-password">
+    </div>
+    
+    <button id="loginBtn" onclick="handleLogin()" class="w-full btn-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-amber-200/50 text-base touch-target">
+        <span id="loginText">Masuk</span>
+    </button>
+    
+    <p class="text-center text-sm text-slate-400 mt-4">
+        Belum punya akun? 
+        <span onclick="showPage('registerPage')" class="text-amber-600 font-bold cursor-pointer hover:underline">Daftar</span>
+    </p>
 </div>
-    
-    <div class="mt-8 text-center">
-        <button onclick="enterDemoMode()" class="text-sm text-slate-400 hover:text-amber-600 transition-colors font-medium">
-            <i class="fas fa-flask mr-1"></i> Coba Mode Demo
-        </button>
-    </div>
+
+<div class="mt-8 text-center">
+    <button onclick="enterDemoMode()" class="text-sm text-slate-400 hover:text-amber-600 transition-colors font-medium">
+        <i class="fas fa-flask mr-1"></i> Coba Mode Demo
+    </button>
+</div>
+```
+
 </div>
 
 <!-- ==================== REGISTER PAGE ==================== -->
+
 <div id="registerPage" class="page min-h-screen flex flex-col justify-center px-6 py-8">
     <div class="text-center mb-8">
         <div class="w-20 h-20 mx-auto mb-4 rounded-2xl btn-primary flex items-center justify-center text-white text-3xl shadow-lg">
@@ -233,39 +236,43 @@
         <h1 class="text-2xl font-bold text-slate-900">Daftar Akun</h1>
         <p class="text-slate-500 text-sm mt-1">Kedai Jamoe Kasir</p>
     </div>
-    
-    <div class="card p-6 space-y-4">
-        <div>
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Nama</label>
-            <input type="text" id="regName" placeholder="Nama lengkap" 
-                class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors"
-                autocomplete="name">
-        </div>
-        <div>
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Email</label>
-            <input type="email" id="regEmail" placeholder="email@contoh.com" 
-                class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors"
-                autocomplete="email" autocapitalize="none">
-        </div>
-        <div>
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Password</label>
-            <input type="password" id="regPassword" placeholder="Min. 6 karakter" 
-                class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors"
-                autocomplete="new-password">
-        </div>
-        
-        <button id="regBtn" onclick="handleRegister()" class="w-full btn-primary text-white font-bold py-4 rounded-xl shadow-lg text-base touch-target">
-            <span id="regText">Daftar</span>
-        </button>
-        
-        <p class="text-center text-sm text-slate-400 mt-4">
-            Sudah punya akun? 
-            <span onclick="showPage('loginPage')" class="text-amber-600 font-bold cursor-pointer hover:underline">Masuk</span>
-        </p>
+
+```
+<div class="card p-6 space-y-4">
+    <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Nama</label>
+        <input type="text" id="regName" placeholder="Nama lengkap" 
+            class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors"
+            autocomplete="name">
     </div>
+    <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Email</label>
+        <input type="email" id="regEmail" placeholder="email@contoh.com" 
+            class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors"
+            autocomplete="email" autocapitalize="none">
+    </div>
+    <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Password</label>
+        <input type="password" id="regPassword" placeholder="Min. 6 karakter" 
+            class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors"
+            autocomplete="new-password">
+    </div>
+    
+    <button id="regBtn" onclick="handleRegister()" class="w-full btn-primary text-white font-bold py-4 rounded-xl shadow-lg text-base touch-target">
+        <span id="regText">Daftar</span>
+    </button>
+    
+    <p class="text-center text-sm text-slate-400 mt-4">
+        Sudah punya akun? 
+        <span onclick="showPage('loginPage')" class="text-amber-600 font-bold cursor-pointer hover:underline">Masuk</span>
+    </p>
+</div>
+```
+
 </div>
 
 <!-- ==================== MAIN APP ==================== -->
+
 <div id="mainApp" class="page">
     <!-- Header -->
     <div class="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-100 px-4 py-3 flex items-center justify-between safe-top">
@@ -283,178 +290,184 @@
         </button>
     </div>
 
-    <!-- Content Area -->
-    <div class="pb-32">
+```
+<!-- Content Area -->
+<div class="pb-32">
+    
+    <!-- ===== HOME PAGE ===== -->
+    <div id="homePage" class="page-content active p-4 space-y-5">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-2 gap-3">
+            <div class="card p-4 space-y-1">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Penjualan Hari Ini</p>
+                <p class="text-2xl font-bold text-slate-900 tracking-tight" id="todaySales">Rp 0</p>
+                <p class="text-xs text-emerald-600 font-semibold"><span id="todayCount">0</span> transaksi</p>
+            </div>
+            <div class="card p-4 space-y-1">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Stok Menipis</p>
+                <p class="text-2xl font-bold text-red-500 tracking-tight" id="lowStockCount">0</p>
+                <p class="text-xs text-slate-400 font-medium">produk perlu restock</p>
+            </div>
+        </div>
         
-        <!-- ===== HOME ===== -->
-        <div id="homePage" class="page-content active p-4 space-y-5">
-            <!-- Stats Cards -->
+        <!-- Quick Actions -->
+        <div class="card p-4">
+            <h2 class="text-sm font-bold text-slate-800 mb-4">Aksi Cepat</h2>
+            <div class="grid grid-cols-3 gap-3">
+                <button onclick="openNewTransaction()" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-amber-50 text-amber-700 active:bg-amber-100 transition-colors touch-target">
+                    <i class="fas fa-cash-register text-xl mb-1"></i>
+                    <span class="text-[11px] font-bold">Transaksi</span>
+                </button>
+                <button onclick="showPageContent('customersPage')" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-blue-50 text-blue-700 active:bg-blue-100 transition-colors touch-target">
+                    <i class="fas fa-users text-xl mb-1"></i>
+                    <span class="text-[11px] font-bold">Pelanggan</span>
+                </button>
+                <button onclick="showPageContent('reportsPage')" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-emerald-50 text-emerald-700 active:bg-emerald-100 transition-colors touch-target">
+                    <i class="fas fa-chart-bar text-xl mb-1"></i>
+                    <span class="text-[11px] font-bold">Laporan</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Products Grid -->
+        <div>
+            <div class="flex items-center justify-between mb-3 px-1">
+                <h2 class="text-sm font-bold text-slate-800">Produk</h2>
+                <button onclick="openAddProduct()" class="text-xs font-bold text-amber-600 touch-target px-2 py-1">
+                    <i class="fas fa-plus-circle mr-1"></i>Tambah
+                </button>
+            </div>
+            <div id="productsGrid" class="grid grid-cols-2 gap-3"></div>
+        </div>
+    </div>
+
+    <!-- ===== TRANSACTIONS PAGE ===== -->
+    <div id="transactionsPage" class="page-content p-4 space-y-4">
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-slate-900">Transaksi</h2>
+            <button onclick="openNewTransaction()" class="btn-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md touch-target flex items-center gap-2">
+                <i class="fas fa-plus"></i> Baru
+            </button>
+        </div>
+        <div id="transactionsList" class="space-y-3"></div>
+    </div>
+
+    <!-- ===== CUSTOMERS PAGE ===== -->
+    <div id="customersPage" class="page-content p-4 space-y-4">
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-slate-900">Pelanggan</h2>
+            <button onclick="openAddCustomer()" class="btn-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md touch-target flex items-center gap-2">
+                <i class="fas fa-plus"></i> Tambah
+            </button>
+        </div>
+        <div class="relative">
+            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="customerSearch" placeholder="Cari pelanggan..." oninput="filterCustomers()" 
+                class="w-full pl-12 pr-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors"
+                autocomplete="off">
+        </div>
+        <div id="customersList" class="space-y-3"></div>
+    </div>
+
+    <!-- ===== PRODUCTS PAGE ===== -->
+    <div id="productsPage" class="page-content p-4 space-y-4">
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-slate-900">Produk</h2>
+            <button onclick="openAddProduct()" class="btn-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md touch-target flex items-center gap-2">
+                <i class="fas fa-plus"></i> Tambah
+            </button>
+        </div>
+        <div id="productsListPage" class="space-y-3"></div>
+    </div>
+
+    <!-- ===== REPORTS PAGE ===== -->
+    <div id="reportsPage" class="page-content p-4 space-y-5">
+        <h2 class="text-lg font-bold text-slate-900">Laporan</h2>
+        
+        <div class="card p-4 space-y-4">
             <div class="grid grid-cols-2 gap-3">
-                <div class="card p-4 space-y-1">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Penjualan Hari Ini</p>
-                    <p class="text-2xl font-bold text-slate-900 tracking-tight" id="todaySales">Rp 0</p>
-                    <p class="text-xs text-emerald-600 font-semibold"><span id="todayCount">0</span> transaksi</p>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Dari</label>
+                    <input type="date" id="reportFrom" class="w-full px-3 py-3 rounded-xl border-2 border-slate-200 text-sm focus:border-amber-500 transition-colors">
                 </div>
-                <div class="card p-4 space-y-1">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Stok Menipis</p>
-                    <p class="text-2xl font-bold text-red-500 tracking-tight" id="lowStockCount">0</p>
-                    <p class="text-xs text-slate-400 font-medium">produk perlu restock</p>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Sampai</label>
+                    <input type="date" id="reportTo" class="w-full px-3 py-3 rounded-xl border-2 border-slate-200 text-sm focus:border-amber-500 transition-colors">
                 </div>
             </div>
-            
-            <!-- Quick Actions -->
-            <div class="card p-4">
-                <h2 class="text-sm font-bold text-slate-800 mb-4">Aksi Cepat</h2>
-                <div class="grid grid-cols-3 gap-3">
-                    <button onclick="openNewTransaction()" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-amber-50 text-amber-700 active:bg-amber-100 transition-colors touch-target">
-                        <i class="fas fa-cash-register text-xl mb-1"></i>
-                        <span class="text-[11px] font-bold">Transaksi</span>
-                    </button>
-                    <button onclick="showPageContent('customersPage')" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-blue-50 text-blue-700 active:bg-blue-100 transition-colors touch-target">
-                        <i class="fas fa-users text-xl mb-1"></i>
-                        <span class="text-[11px] font-bold">Pelanggan</span>
-                    </button>
-                    <button onclick="showPageContent('reportsPage')" class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-emerald-50 text-emerald-700 active:bg-emerald-100 transition-colors touch-target">
-                        <i class="fas fa-chart-bar text-xl mb-1"></i>
-                        <span class="text-[11px] font-bold">Laporan</span>
-                    </button>
-                </div>
+            <button onclick="generateReport()" class="w-full bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white py-3 rounded-xl text-sm font-bold transition-colors touch-target">
+                <i class="fas fa-filter mr-2"></i>Tampilkan Laporan
+            </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3" id="reportSummary">
+            <div class="card p-4 space-y-1">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Penjualan</p>
+                <p class="text-lg font-bold text-slate-900" id="reportTotal">Rp 0</p>
             </div>
-            
-            <!-- Products Grid -->
-            <div>
-                <div class="flex items-center justify-between mb-3 px-1">
-                    <h2 class="text-sm font-bold text-slate-800">Produk</h2>
-                    <button onclick="openAddProduct()" class="text-xs font-bold text-amber-600 touch-target px-2 py-1">
-                        <i class="fas fa-plus-circle mr-1"></i>Tambah
-                    </button>
-                </div>
-                <div id="productsGrid" class="grid grid-cols-2 gap-3"></div>
+            <div class="card p-4 space-y-1">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Transaksi</p>
+                <p class="text-lg font-bold text-slate-900" id="reportCount">0</p>
+            </div>
+            <div class="card p-4 space-y-1">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Produk Terjual</p>
+                <p class="text-lg font-bold text-slate-900" id="reportItems">0</p>
+            </div>
+            <div class="card p-4 space-y-1">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rata-rata</p>
+                <p class="text-lg font-bold text-slate-900" id="reportAvg">Rp 0</p>
             </div>
         </div>
 
-        <!-- ===== TRANSACTIONS ===== -->
-        <div id="transactionsPage" class="page-content p-4 space-y-4">
-            <div class="flex items-center justify-between">
-                <h2 class="text-lg font-bold text-slate-900">Transaksi</h2>
-                <button onclick="openNewTransaction()" class="btn-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md touch-target flex items-center gap-2">
-                    <i class="fas fa-plus"></i> Baru
-                </button>
-            </div>
-            <div id="transactionsList" class="space-y-3"></div>
+        <div class="card p-4">
+            <h3 class="text-sm font-bold text-slate-800 mb-4">Produk Terlaris</h3>
+            <div id="topProducts" class="space-y-3"></div>
         </div>
 
-        <!-- ===== CUSTOMERS ===== -->
-        <div id="customersPage" class="page-content p-4 space-y-4">
-            <div class="flex items-center justify-between">
-                <h2 class="text-lg font-bold text-slate-900">Pelanggan</h2>
-                <button onclick="openAddCustomer()" class="btn-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md touch-target flex items-center gap-2">
-                    <i class="fas fa-plus"></i> Tambah
-                </button>
-            </div>
-            <div class="relative">
-                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="customerSearch" placeholder="Cari pelanggan..." oninput="filterCustomers()" 
-                    class="w-full pl-12 pr-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors"
-                    autocomplete="off">
-            </div>
-            <div id="customersList" class="space-y-3"></div>
-        </div>
-
-        <!-- ===== PRODUCTS ===== -->
-        <div id="productsPage" class="page-content p-4 space-y-4">
-            <div class="flex items-center justify-between">
-                <h2 class="text-lg font-bold text-slate-900">Produk</h2>
-                <button onclick="openAddProduct()" class="btn-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md touch-target flex items-center gap-2">
-                    <i class="fas fa-plus"></i> Tambah
-                </button>
-            </div>
-            <div id="productsListPage" class="space-y-3"></div>
-        </div>
-
-        <!-- ===== REPORTS ===== -->
-        <div id="reportsPage" class="page-content p-4 space-y-5">
-            <h2 class="text-lg font-bold text-slate-900">Laporan</h2>
-            
-            <div class="card p-4 space-y-4">
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Dari</label>
-                        <input type="date" id="reportFrom" class="w-full px-3 py-3 rounded-xl border-2 border-slate-200 text-sm focus:border-amber-500 transition-colors">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Sampai</label>
-                        <input type="date" id="reportTo" class="w-full px-3 py-3 rounded-xl border-2 border-slate-200 text-sm focus:border-amber-500 transition-colors">
-                    </div>
-                </div>
-                <button onclick="generateReport()" class="w-full bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white py-3 rounded-xl text-sm font-bold transition-colors touch-target">
-                    <i class="fas fa-filter mr-2"></i>Tampilkan Laporan
-                </button>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3" id="reportSummary">
-                <div class="card p-4 space-y-1">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Penjualan</p>
-                    <p class="text-lg font-bold text-slate-900" id="reportTotal">Rp 0</p>
-                </div>
-                <div class="card p-4 space-y-1">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Transaksi</p>
-                    <p class="text-lg font-bold text-slate-900" id="reportCount">0</p>
-                </div>
-                <div class="card p-4 space-y-1">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Produk Terjual</p>
-                    <p class="text-lg font-bold text-slate-900" id="reportItems">0</p>
-                </div>
-                <div class="card p-4 space-y-1">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rata-rata</p>
-                    <p class="text-lg font-bold text-slate-900" id="reportAvg">Rp 0</p>
-                </div>
-            </div>
-
-            <div class="card p-4">
-                <h3 class="text-sm font-bold text-slate-800 mb-4">Produk Terlaris</h3>
-                <div id="topProducts" class="space-y-3"></div>
-            </div>
-
-            <div class="card p-4">
-                <h3 class="text-sm font-bold text-slate-800 mb-4">Detail Transaksi</h3>
-                <div id="reportTransactions" class="space-y-4 max-h-[60vh] overflow-y-auto hide-scrollbar"></div>
-            </div>
+        <div class="card p-4">
+            <h3 class="text-sm font-bold text-slate-800 mb-4">Detail Transaksi</h3>
+            <div id="reportTransactions" class="space-y-4 max-h-[60vh] overflow-y-auto hide-scrollbar"></div>
         </div>
     </div>
+</div>
 
-    <!-- Bottom Navigation -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-100 px-2 py-2 z-40 safe-bottom">
-        <div class="flex justify-around">
-            <button onclick="showPageContent('homePage')" class="nav-item active flex flex-col items-center gap-1 px-3 py-2 text-amber-600 text-[11px] font-bold transition-colors touch-target" data-page="homePage">
-                <div class="nav-icon w-11 h-11 rounded-2xl flex items-center justify-center text-xl bg-amber-50 transition-all">
-                    <i class="fas fa-home"></i>
-                </div>
-                <span>Beranda</span>
-            </button>
-            <button onclick="showPageContent('transactionsPage')" class="nav-item flex flex-col items-center gap-1 px-3 py-2 text-slate-400 text-[11px] font-bold transition-colors touch-target" data-page="transactionsPage">
-                <div class="nav-icon w-11 h-11 rounded-2xl flex items-center justify-center text-xl transition-all">
-                    <i class="fas fa-receipt"></i>
-                </div>
-                <span>Transaksi</span>
-            </button>
-            <button onclick="showPageContent('productsPage')" class="nav-item flex flex-col items-center gap-1 px-3 py-2 text-slate-400 text-[11px] font-bold transition-colors touch-target" data-page="productsPage">
-                <div class="nav-icon w-11 h-11 rounded-2xl flex items-center justify-center text-xl transition-all">
-                    <i class="fas fa-box"></i>
-                </div>
-                <span>Produk</span>
-            </button>
-            <button onclick="showPageContent('reportsPage')" class="nav-item flex flex-col items-center gap-1 px-3 py-2 text-slate-400 text-[11px] font-bold transition-colors touch-target" data-page="reportsPage">
-                <div class="nav-icon w-11 h-11 rounded-2xl flex items-center justify-center text-xl transition-all">
-                    <i class="fas fa-chart-pie"></i>
-                </div>
-                <span>Laporan</span>
-            </button>
-        </div>
+<!-- Bottom Navigation (FIXED - Hanya muncul di mainApp) -->
+<div class="navbar fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-100 px-2 py-2 z-40 safe-bottom">
+    <div class="flex justify-around">
+        <button onclick="showPageContent('homePage')" class="nav-item active flex flex-col items-center gap-1 px-3 py-2 text-amber-600 text-[11px] font-bold transition-colors touch-target" data-page="homePage">
+            <div class="nav-icon w-11 h-11 rounded-2xl flex items-center justify-center text-xl bg-amber-50 transition-all">
+                <i class="fas fa-home"></i>
+            </div>
+            <span>Beranda</span>
+        </button>
+        <button onclick="showPageContent('transactionsPage')" class="nav-item flex flex-col items-center gap-1 px-3 py-2 text-slate-400 text-[11px] font-bold transition-colors touch-target" data-page="transactionsPage">
+            <div class="nav-icon w-11 h-11 rounded-2xl flex items-center justify-center text-xl transition-all">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <span>Transaksi</span>
+        </button>
+        <button onclick="showPageContent('productsPage')" class="nav-item flex flex-col items-center gap-1 px-3 py-2 text-slate-400 text-[11px] font-bold transition-colors touch-target" data-page="productsPage">
+            <div class="nav-icon w-11 h-11 rounded-2xl flex items-center justify-center text-xl transition-all">
+                <i class="fas fa-box"></i>
+            </div>
+            <span>Produk</span>
+        </button>
+        <button onclick="showPageContent('reportsPage')" class="nav-item flex flex-col items-center gap-1 px-3 py-2 text-slate-400 text-[11px] font-bold transition-colors touch-target" data-page="reportsPage">
+            <div class="nav-icon w-11 h-11 rounded-2xl flex items-center justify-center text-xl transition-all">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <span>Laporan</span>
+        </button>
     </div>
+</div>
+```
+
+</div>
+
 <!-- ==================== MODALS ==================== -->
 
 <!-- New Transaction Modal -->
+
 <div id="transactionModal" class="modal-overlay">
     <div class="modal-content p-6 space-y-5">
         <div class="flex items-center justify-between">
@@ -463,61 +476,64 @@
                 <i class="fas fa-times"></i>
             </button>
         </div>
-  
-        <!-- Customer Select -->
-        <div>
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Pelanggan</label>
-            <select id="txCustomer" class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base bg-white focus:border-amber-500 transition-colors appearance-none">
-                <option value="">-- Umum (Tanpa Nama) --</option>
-            </select>
-            <button onclick="openAddCustomerFromTx()" class="text-xs text-amber-600 font-bold mt-2 hover:underline touch-target py-1">
-                <i class="fas fa-plus mr-1"></i>Pelanggan Baru
-            </button>
-        </div>
 
-        <!-- Products Selection -->
-        <div>
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Produk</label>
-            <div id="txProducts" class="space-y-3 max-h-[40vh] overflow-y-auto hide-scrollbar pr-1"></div>
-        </div>
-
-        <!-- Payment Method -->
-        <div>
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Metode Pembayaran</label>
-            <div class="grid grid-cols-3 gap-2">
-                <button type="button" onclick="selectPayment('cash')" class="payment-btn active py-3 px-2 rounded-xl border-2 border-amber-500 bg-amber-50 text-amber-700 text-xs font-bold text-center touch-target" data-method="cash">
-                    <i class="fas fa-money-bill-wave block text-xl mb-1.5"></i>Tunai
-                </button>
-                <button type="button" onclick="selectPayment('transfer')" class="payment-btn py-3 px-2 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-600 text-center touch-target" data-method="transfer">
-                    <i class="fas fa-university block text-xl mb-1.5"></i>Transfer
-                </button>
-                <button type="button" onclick="selectPayment('gopay')" class="payment-btn py-3 px-2 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-600 text-center touch-target" data-method="gopay">
-                    <i class="fas fa-wallet block text-xl mb-1.5"></i>GoPay
-                </button>
-            </div>
-        </div>
-
-        <!-- Notes -->
-        <div>
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Catatan (Opsional)</label>
-            <textarea id="txNotes" rows="2" placeholder="Contoh: Order IG @nama, GoFood #123" 
-                class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base resize-none focus:border-amber-500 transition-colors"></textarea>
-        </div>
-
-        <!-- Total -->
-        <div class="bg-slate-50 rounded-2xl p-5 flex items-center justify-between border-2 border-slate-100">
-            <span class="text-base font-bold text-slate-600">Total Pembayaran</span>
-            <span class="text-2xl font-bold text-slate-900 tracking-tight" id="txTotal">Rp 0</span>
-        </div>
-    </div>
-        
-        <button onclick="submitTransaction()" id="submitTxBtn" class="w-full btn-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-amber-200/50 text-base touch-target">
-            Simpan Transaksi
+```
+    <!-- Customer Select -->
+    <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Pelanggan</label>
+        <select id="txCustomer" class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base bg-white focus:border-amber-500 transition-colors appearance-none">
+            <option value="">-- Umum (Tanpa Nama) --</option>
+        </select>
+        <button onclick="openAddCustomerFromTx()" class="text-xs text-amber-600 font-bold mt-2 hover:underline touch-target py-1">
+            <i class="fas fa-plus mr-1"></i>Pelanggan Baru
         </button>
     </div>
+
+    <!-- Products Selection -->
+    <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Produk</label>
+        <div id="txProducts" class="space-y-3 max-h-[40vh] overflow-y-auto hide-scrollbar pr-1"></div>
+    </div>
+
+    <!-- Payment Method -->
+    <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Metode Pembayaran</label>
+        <div class="grid grid-cols-3 gap-2">
+            <button type="button" onclick="selectPayment('cash')" class="payment-btn active py-3 px-2 rounded-xl border-2 border-amber-500 bg-amber-50 text-amber-700 text-xs font-bold text-center touch-target" data-method="cash">
+                <i class="fas fa-money-bill-wave block text-xl mb-1.5"></i>Tunai
+            </button>
+            <button type="button" onclick="selectPayment('transfer')" class="payment-btn py-3 px-2 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-600 text-center touch-target" data-method="transfer">
+                <i class="fas fa-university block text-xl mb-1.5"></i>Transfer
+            </button>
+            <button type="button" onclick="selectPayment('gopay')" class="payment-btn py-3 px-2 rounded-xl border-2 border-slate-200 text-xs font-bold text-slate-600 text-center touch-target" data-method="gopay">
+                <i class="fas fa-wallet block text-xl mb-1.5"></i>GoPay
+            </button>
+        </div>
+    </div>
+
+    <!-- Notes -->
+    <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Catatan (Opsional)</label>
+        <textarea id="txNotes" rows="2" placeholder="Contoh: Order IG @nama, GoFood #123" 
+            class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base resize-none focus:border-amber-500 transition-colors"></textarea>
+    </div>
+
+    <!-- Total -->
+    <div class="bg-slate-50 rounded-2xl p-5 flex items-center justify-between border-2 border-slate-100">
+        <span class="text-base font-bold text-slate-600">Total Pembayaran</span>
+        <span class="text-2xl font-bold text-slate-900 tracking-tight" id="txTotal">Rp 0</span>
+    </div>
+    
+    <button onclick="submitTransaction()" id="submitTxBtn" class="w-full btn-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-amber-200/50 text-base touch-target">
+        Simpan Transaksi
+    </button>
+</div>
+```
+
 </div>
 
 <!-- Add/Edit Product Modal -->
+
 <div id="productModal" class="modal-overlay">
     <div class="modal-content p-6 space-y-5">
         <div class="flex items-center justify-between">
@@ -526,49 +542,52 @@
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        
-        <input type="hidden" id="productId">
-        
-        <div>
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Nama Produk</label>
-            <input type="text" id="productName" placeholder="Contoh: Kunyit Booster" 
-                class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors"
-                autocomplete="off">
-        </div>
-        
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Harga Jual</label>
-                <!-- FIX #7: inputmode numeric untuk iOS number keyboard -->
-                <input type="number" id="productPrice" placeholder="20000" inputmode="numeric" pattern="[0-9]*"
-                    class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors">
-            </div>
-            <div>
-                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">HPP (Modal)</label>
-                <input type="number" id="productCost" placeholder="5000" inputmode="numeric" pattern="[0-9]*"
-                    class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors">
-            </div>
-        </div>
-        
-        <div>
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Stok Awal (botol)</label>
-            <input type="number" id="productStock" placeholder="10" inputmode="numeric" pattern="[0-9]*"
-                class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors">
-        </div>
-        
-        <div>
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Min. Stok Alert</label>
-            <input type="number" id="productMinStock" placeholder="5" value="5" inputmode="numeric" pattern="[0-9]*"
-                class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors">
-        </div>
-        
-        <button onclick="saveProduct()" id="saveProductBtn" class="w-full btn-primary text-white font-bold py-4 rounded-xl shadow-lg text-base touch-target">
-            Simpan Produk
-        </button>
+
+```
+    <input type="hidden" id="productId">
+    
+    <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Nama Produk</label>
+        <input type="text" id="productName" placeholder="Contoh: Kunyit Booster" 
+            class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors"
+            autocomplete="off">
     </div>
+    
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Harga Jual</label>
+            <input type="number" id="productPrice" placeholder="20000" inputmode="numeric" pattern="[0-9]*"
+                class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors">
+        </div>
+        <div>
+            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">HPP (Modal)</label>
+            <input type="number" id="productCost" placeholder="5000" inputmode="numeric" pattern="[0-9]*"
+                class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors">
+        </div>
+    </div>
+    
+    <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Stok Awal (botol)</label>
+        <input type="number" id="productStock" placeholder="10" inputmode="numeric" pattern="[0-9]*"
+            class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors">
+    </div>
+    
+    <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Min. Stok Alert</label>
+        <input type="number" id="productMinStock" placeholder="5" value="5" inputmode="numeric" pattern="[0-9]*"
+            class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors">
+    </div>
+    
+    <button onclick="saveProduct()" id="saveProductBtn" class="w-full btn-primary text-white font-bold py-4 rounded-xl shadow-lg text-base touch-target">
+        Simpan Produk
+    </button>
+</div>
+```
+
 </div>
 
 <!-- Add/Edit Customer Modal -->
+
 <div id="customerModal" class="modal-overlay">
     <div class="modal-content p-6 space-y-5">
         <div class="flex items-center justify-between">
@@ -577,36 +596,40 @@
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        
-        <input type="hidden" id="customerId">
-        
-        <div>
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Nama Pelanggan</label>
-            <input type="text" id="customerName" placeholder="Nama lengkap" 
-                class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors"
-                autocomplete="name">
-        </div>
-        
-        <div>
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">No. HP / Instagram</label>
-            <input type="text" id="customerContact" placeholder="@username_ig atau 0812xxxx" 
-                class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors"
-                autocomplete="off">
-        </div>
-        
-        <div>
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Alamat (opsional)</label>
-            <textarea id="customerAddress" rows="2" placeholder="Alamat pengiriman" 
-                class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base resize-none focus:border-amber-500 transition-colors"></textarea>
-        </div>
-        
-        <button onclick="saveCustomer()" id="saveCustomerBtn" class="w-full btn-primary text-white font-bold py-4 rounded-xl shadow-lg text-base touch-target">
-            Simpan Pelanggan
-        </button>
+
+```
+    <input type="hidden" id="customerId">
+    
+    <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Nama Pelanggan</label>
+        <input type="text" id="customerName" placeholder="Nama lengkap" 
+            class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors"
+            autocomplete="name">
     </div>
+    
+    <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">No. HP / Instagram</label>
+        <input type="text" id="customerContact" placeholder="@username_ig atau 0812xxxx" 
+            class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base focus:border-amber-500 transition-colors"
+            autocomplete="off">
+    </div>
+    
+    <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Alamat (opsional)</label>
+        <textarea id="customerAddress" rows="2" placeholder="Alamat pengiriman" 
+            class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 text-base resize-none focus:border-amber-500 transition-colors"></textarea>
+    </div>
+    
+    <button onclick="saveCustomer()" id="saveCustomerBtn" class="w-full btn-primary text-white font-bold py-4 rounded-xl shadow-lg text-base touch-target">
+        Simpan Pelanggan
+    </button>
+</div>
+```
+
 </div>
 
 <!-- Transaction Detail Modal -->
+
 <div id="txDetailModal" class="modal-overlay">
     <div class="modal-content p-6 space-y-4">
         <div class="flex items-center justify-between">
@@ -620,18 +643,20 @@
 </div>
 
 <!-- Toast Notification -->
+
 <div id="toast" class="toast"></div>
 
 <!-- ==================== JAVASCRIPT ==================== -->
+
 <script>
 // ==================== CONFIG & STATE ====================
 const SUPABASE_URL = 'https://your-project.supabase.co';
 const SUPABASE_KEY = 'your-anon-key';
 
-let supabaseClient = null;  // FIX #2: Rename supabase -> supabaseClient untuk clarity
+let supabaseClient = null;
 let currentUser = null;
 let isOnline = navigator.onLine;
-let syncQueue = [];  // FIX #6: Offline queue
+let syncQueue = [];
 
 // Data stores
 let products = [];
@@ -671,10 +696,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// ==================== SUPABASE INIT (FIX #2) ====================
+// ==================== SUPABASE INIT ====================
 function initSupabase() {
     try {
-        // FIX #2: Gunakan supabase.createClient (bukan window.supabase.createClient)
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
             auth: {
                 persistSession: true,
@@ -837,20 +861,17 @@ async function logout() {
     showPage('loginPage');
 }
 
-// ==================== DATA SYNC (FIX #5, #6) ====================
+// ==================== DATA SYNC ====================
 async function loadDataFromSupabase() {
     if (!supabaseClient) return;
     
     try {
-        // Load products
         const { data: productsData } = await supabaseClient.from('products').select('*');
         if (productsData) products = productsData;
         
-        // Load customers
         const { data: customersData } = await supabaseClient.from('customers').select('*');
         if (customersData) customers = customersData;
         
-        // Load transactions
         const { data: txData } = await supabaseClient.from('transactions').select('*');
         if (txData) transactions = txData;
     } catch (e) {
@@ -859,7 +880,6 @@ async function loadDataFromSupabase() {
     }
 }
 
-// FIX #6: Offline sync queue
 function queueForSync(type, data) {
     syncQueue.push({ type, data, timestamp: Date.now() });
     localStorage.setItem('syncQueue', JSON.stringify(syncQueue));
@@ -876,7 +896,7 @@ async function processSyncQueue() {
             await supabaseClient.from(item.type).insert(item.data);
         } catch (e) {
             console.error('Sync error:', e);
-            syncQueue.unshift(item); // Put back if failed
+            syncQueue.unshift(item);
             break;
         }
     }
@@ -976,7 +996,6 @@ function quickAddToCart(productId) {
             if (current < stock) {
                 input.value = current + 1;
                 updateTxTotal();
-                // Visual feedback
                 input.parentElement.querySelector('.qty-btn:last-child').classList.add('bg-amber-100');
                 setTimeout(() => input.parentElement.querySelector('.qty-btn:last-child').classList.remove('bg-amber-100'), 200);
             } else {
@@ -1039,14 +1058,12 @@ function openNewTransaction() {
     txCart = {};
     selectedPayment = 'cash';
     
-    // Populate customer select
     const custSelect = document.getElementById('txCustomer');
     if (custSelect) {
         custSelect.innerHTML = '<option value="">-- Umum (Tanpa Nama) --</option>' + 
             customers.map(c => `<option value="${c.id}">${c.name} (${c.contact})</option>`).join('');
     }
     
-    // Populate products
     const productsDiv = document.getElementById('txProducts');
     if (productsDiv) {
         productsDiv.innerHTML = products.map(p => `
@@ -1069,7 +1086,6 @@ function openNewTransaction() {
         `).join('');
     }
     
-    // Reset payment
     document.querySelectorAll('.payment-btn').forEach(b => {
         b.classList.remove('active');
         b.classList.add('border-slate-200', 'text-slate-600');
@@ -1128,7 +1144,6 @@ function updateTxTotal() {
     if (totalEl) totalEl.textContent = formatRupiah(total);
 }
 
-// FIX #8: Prevent double submit dengan state flag
 let isSubmitting = false;
 
 async function submitTransaction() {
@@ -1182,7 +1197,6 @@ async function submitTransaction() {
         created_at: new Date().toISOString()
     };
     
-    // Update stock
     items.forEach(item => {
         const product = products.find(p => p.id === item.product_id);
         if (product) {
@@ -1191,7 +1205,6 @@ async function submitTransaction() {
         }
     });
     
-    // Update customer stats
     if (customer) {
         customer.order_count = (customer.order_count || 0) + 1;
         customer.total_spent = (customer.total_spent || 0) + total;
@@ -1199,7 +1212,6 @@ async function submitTransaction() {
     
     transactions.push(transaction);
     
-    // FIX #5, #6: Sync dengan Supabase atau queue
     if (supabaseClient && isOnline) {
         try {
             await supabaseClient.from('transactions').insert(transaction);
@@ -1634,7 +1646,6 @@ function generateReport() {
     if (itemsEl) itemsEl.textContent = items;
     if (avgEl) avgEl.textContent = formatRupiah(avg);
     
-    // Top products
     const productSales = {};
     filtered.forEach(t => {
         (t.items || []).forEach(i => {
@@ -1661,7 +1672,6 @@ function generateReport() {
         `).join('') : '<p class="text-sm text-slate-400 text-center py-6 font-medium">Tidak ada data</p>';
     }
     
-    // Transaction details
     const reportTxEl = document.getElementById('reportTransactions');
     if (reportTxEl) {
         reportTxEl.innerHTML = filtered.length > 0 ? 
@@ -1682,7 +1692,7 @@ function generateReport() {
     }
 }
 
-// ==================== MODAL UTILS (FIX #9) ====================
+// ==================== MODAL UTILS ====================
 let activeModal = null;
 
 function openModal(id) {
@@ -1692,13 +1702,11 @@ function openModal(id) {
     modal.classList.add('active');
     activeModal = modal;
     
-    // FIX #9: iOS scroll lock yang proper
     document.documentElement.style.overflow = 'hidden';
     document.documentElement.style.position = 'fixed';
     document.documentElement.style.width = '100%';
     document.documentElement.style.height = '100%';
     
-    // Scroll modal content to top
     const content = modal.querySelector('.modal-content');
     if (content) content.scrollTop = 0;
 }
@@ -1710,31 +1718,27 @@ function closeModal(id) {
     modal.classList.remove('active');
     activeModal = null;
     
-    // FIX #9: Restore scroll
     document.documentElement.style.overflow = '';
     document.documentElement.style.position = '';
     document.documentElement.style.width = '';
     document.documentElement.style.height = '';
 }
 
-// Close on overlay tap
 document.addEventListener('click', (e) => {
     if (e.target.classList.contains('modal-overlay') && e.target.classList.contains('active')) {
         closeModal(e.target.id);
     }
 });
 
-// Close on escape key
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && activeModal) {
         closeModal(activeModal.id);
     }
 });
 
-// ==================== UTILS (FIX #10) ====================
+// ==================== UTILS ====================
 function formatRupiah(num) {
     if (num === null || num === undefined || isNaN(num)) return 'Rp 0';
-    // FIX #10: Regex yang benar (single backslash)
     return 'Rp ' + Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
@@ -1757,7 +1761,6 @@ function showToast(msg) {
     const toast = document.getElementById('toast');
     if (!toast) return;
     
-    // Clear existing timeout
     if (toastTimeout) clearTimeout(toastTimeout);
     
     toast.textContent = msg;
@@ -1771,7 +1774,6 @@ function showToast(msg) {
 // ==================== SERVICE WORKER (Optional PWA) ====================
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        // Uncomment jika ingin install sebagai PWA
         // navigator.serviceWorker.register('sw.js').catch(() => {});
     });
 }
