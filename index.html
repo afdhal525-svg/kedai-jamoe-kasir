@@ -1,4 +1,6 @@
+
 <!DOCTYPE html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <html lang="id">
 <head>
@@ -648,7 +650,12 @@
 
 <!-- ==================== JAVASCRIPT ==================== -->
 
+    
 <script>
+const SUPABASE_URL = "ISI_URL_KAMU";
+const SUPABASE_ANON_KEY = "ISI_PUBLISHABLE_KEY_KAMU";
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ==================== CONFIG & STATE ====================
 const SUPABASE_URL = 'https://your-project.supabase.co';
 const SUPABASE_KEY = 'your-anon-key';
@@ -718,7 +725,7 @@ function initSupabase() {
 }
 
 async function checkSession() {
-    if (!supabaseClient) return;
+     return;
     try {
         const { data: { session }, error } = await supabaseClient.auth.getSession();
         if (error) throw error;
@@ -771,15 +778,51 @@ async function handleLogin() {
     text.innerHTML = '<div class="loading"></div>';
     btn.disabled = true;
     
-    if (!supabaseClient) {
-        showToast('Mode demo aktif - login otomatis');
-        setTimeout(() => {
-            text.textContent = 'Masuk';
-            btn.disabled = false;
-            showMainApp();
-        }, 800);
+    async function login(email, password) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
+
+    if (error) {
+        showToast("Login gagal");
         return;
     }
+
+    showMainApp();
+}
+    async function register(email, password) {
+    const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password
+    });
+
+    if (error) {
+        showToast("Daftar gagal");
+        return;
+    }
+
+    showToast("Berhasil daftar, silakan login");
+}
+
+    async function checkLogin() {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (session) {
+        showMainApp();
+    } else {
+        showLoginPage();
+    }
+}
+
+    document.addEventListener("DOMContentLoaded", () => {
+    checkLogin();
+});
+
+    async function logout() {
+    await supabase.auth.signOut();
+    showLoginPage();
+}
     
     try {
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
