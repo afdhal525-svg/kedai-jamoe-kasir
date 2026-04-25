@@ -129,6 +129,14 @@ async function logout() {
   await supabase.auth.signOut();
 }
 
+function goTo(id) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.scrollIntoView({
+      behavior: "smooth"
+    });
+  }
+}  
 
 /* =========================
    SESSION CHECK
